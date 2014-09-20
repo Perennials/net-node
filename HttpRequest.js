@@ -47,9 +47,17 @@ HttpRequest.define( {
 		return this;
 	},
 
+	getHost: function () {
+		return this._host;
+	},
+
 	setMethod: function ( method ) {
 		this._method = method;
 		return this;
+	},
+
+	getMethod: function () {
+		return this._method;
 	},
 
 	//todo: support for streams will be very nice, but only when needed (i.e. never)
@@ -63,10 +71,18 @@ HttpRequest.define( {
 		return this;
 	},
 
+	getContent: function () {
+		return this._content;
+	},
+
 	//todo: support objects with {names: values}
 	setQuery: function ( query ) {
 		this._query = query;
 		return this;
+	},
+
+	getQuery: function () {
+		return this._query;
 	},
 
 	isInProgress: function () {
@@ -121,7 +137,7 @@ HttpRequest.define( {
 		};
 
 
-		var hostport = this._host.splitFirst( ':' );
+		var hostport = (this._host||'').splitFirst( ':' );
 
 		var req = Http.request( {
 			method: this._method,
