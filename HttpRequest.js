@@ -95,7 +95,7 @@ HttpRequest.define( {
 
 		this._inprogress = true;
 
-		if ( arguments.length === 1 ) {
+		if ( arguments.length === 1 && arguments[ 0 ] instanceof Function ) {
 			callback = content;
 			content = undefined;
 		}
@@ -115,7 +115,9 @@ HttpRequest.define( {
 			}
 
 			_this._inprogress = false;
-			callback( response );
+			if ( callback instanceof Function ) {
+				callback( response );
+			}
 		};
 
 

@@ -21,10 +21,10 @@ UnitestA( 'HttpRequest', function ( test ) {
 			'Connection': 'keep-alive'
 		},
 		// content: 'hello world'
-	}, function () {
+	}, function ( hostUrl ) {
 
 
-		(new HttpRequest( 'http://127.0.0.1:' + DummyServer.defPort + '/asd/qwe?zxc=123' ))
+		(new HttpRequest( hostUrl + '/asd/qwe?zxc=123' ))
 		.send( 'hello world', function ( response ) {
 			
 			test( !response.isError(), response.getError() );

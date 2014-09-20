@@ -22,7 +22,11 @@ var DummyServer = {
 			} );
 		
 		} );
-		server.listen( port || DummyServer.defPort, host || '127.0.0.1', callback );
+		server.listen( port || DummyServer.defPort, host || '127.0.0.1', function () {
+			if ( callback ) {
+				callback( 'http://' + (host || '127.0.0.1') + ':' + (port || DummyServer.defPort) );
+			}
+		} );
 	}
 
 };
