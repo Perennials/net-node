@@ -3,27 +3,41 @@
 require( 'Prototype' );
 
 var Http = require( 'http' );
+var Https = require( 'https' );
 var Url = require( 'url' );
 var HttpResponse = require( './HttpResponse.js' );
+var HttpHeaders = require( './HttpHeaders.js' );
+
+var Snappy = null;
+try { Snappy = require( 'snappy' ); }
+catch ( e ) {}
+var Zlib = require( 'zlib' );
+
+var _DefAcceptEncoding = (Snappy ? HttpHeaders.CONTENT_ENCODING_SNAPPY + ', ' : '') + 
+                         HttpHeaders.CONTENT_ENCODING_GZIP + ', ' +
+                         HttpHeaders.CONTENT_ENCODING_DEFLATE + ', ' +
+                         HttpHeaders.CONTENT_ENCODING_IDENTITY;
 
 function HttpRequest ( url ) {
 
 	this._inprogress = null;
+	this._autoEncode = true;
 	this._method = 'GET';
+	this._scheme = 'http';
 	this._host = null;
 	this._path = null;
 	this._query = null;
 	this._auth = null;
 	this._content = null;
 	this._headers = {};
-	this.setHeader( {
-		'Connection': 'close',
-		//todo: snappy, msgpack
-		'Accept-Encoding': 'gzip, deflate, identity'
-	} );
+	this.setHeader( HttpHeaders.CONNECTION, HttpHeaders.CONNECTION_CLOSE );
+	this.setHeader( HttpHeaders.ACCEPT_ENCODING, _DefAcceptEncoding );
 
 	if ( String.isString( url ) && url.length > 0 ) {
 		var url = Url.parse( url );
+		if ( url.protocol ) {
+			this._scheme = url.protocol.splitFirst( ':' ).left;
+		}
 		if ( url.path ) {
 			this._path = url.pathname;
 		}
@@ -41,6 +55,29 @@ function HttpRequest ( url ) {
 }
 
 HttpRequest.define( {
+
+	dontAutoEncode: function () {
+		this._autoEncode = false;
+		return this;
+	},
+
+	setSecurity: function ( security ) {
+		this._security = security;
+		return this;
+	},
+
+	getSecurity: function () {
+		return this._security;
+	},
+
+	setScheme: function ( scheme ) {
+		this._scheme = scheme;
+		return this;
+	},
+
+	getScheme: function ( scheme ) {
+		return this._scheme;
+	},
 
 	setHost: function ( host ) {
 		this._host = host;
@@ -61,12 +98,15 @@ HttpRequest.define( {
 	},
 
 	//todo: support for streams will be very nice, but only when needed (i.e. never)
-	setContent: function ( content ) {
+	setContent: function ( content, encoding ) {
+		if ( String.isString( content ) && content.length > 0 ) {
+			content = new Buffer( content, encoding || 'utf8' );
+		}
 		this._content = content;
-		if ( ( this._content instanceof Buffer || String.isString( this._content ) ) &&
+		if ( ( this._content instanceof Buffer ) &&
 		     this._content.length > 0 ) {
 
-			this.setHeader( 'Content-Length', this._content.length );
+			this.setHeader( HttpHeaders.CONTENT_LENGTH, this._content.length );
 		}
 		return this;
 	},
@@ -75,9 +115,8 @@ HttpRequest.define( {
 		return this._content;
 	},
 
-	//todo: support objects with {names: values}
 	setQuery: function ( query ) {
-		this._query = query;
+		this._query = query instanceof Object ? QueryString.encode( query ) : query;
 		return this;
 	},
 
@@ -101,9 +140,20 @@ HttpRequest.define( {
 		return this;
 	},
 
-	//todo: support for output sink would be very nice, but only when needed (i.e. never)
+	getHeaders: function () {
+		return this._headers;
+	},
 
-	send: function ( content, callback ) {
+	getHeader: function ( name ) {
+		var ret = this._headers instanceof Object ?
+		          this._headers[ name.toLowerCase() ] :
+		          undefined;
+
+		return ret;
+	},
+
+	//todo: support for output sink would be very nice, but only when needed (i.e. never)
+	send: function ( content, encoding ) {
 
 		if ( this._inprogress !== null ) {
 			throw new Error( 'Reusing the same HttpRequest is not implemented.' );
@@ -111,78 +161,123 @@ HttpRequest.define( {
 
 		this._inprogress = true;
 
-		if ( arguments.length === 1 && arguments[ 0 ] instanceof Function ) {
-			callback = content;
+
+		if ( !(content instanceof Buffer) && !String.isString( content ) ) {
 			content = undefined;
 		}
 
-		if ( content !== undefined ) {
-			this.setContent( content );
+		if ( !String.isString( encoding ) ) {
+			encoding = undefined;
 		}
 
+		var callback = arguments[ arguments.length - 1 ];
+		if ( !(callback instanceof Function) ) {
+			callback = null;
+		}
 
-		var response = new HttpResponse();
-		response.setRequest( this );
-		
 		var _this = this;
-		var notify = function () {
-			if ( _this._inprogress !== true ) {
+		var _doSend = function ( err, content ) {
+
+			if ( content !== undefined ) {
+				_this.setContent( content, encoding );
+			}
+
+			var response = new HttpResponse();
+			if ( err ) {
+				response.setError( err );
+			}
+			response.setRequest( _this );
+			
+			var notify = function () {
+				if ( _this._inprogress !== true ) {
+					return;
+				}
+
+				_this._inprogress = false;
+				if ( callback instanceof Function ) {
+					callback( response );
+				}
+			};
+
+			if ( err ) {
+				notify();
 				return;
 			}
 
-			_this._inprogress = false;
-			if ( callback instanceof Function ) {
-				callback( response );
+
+			var hostport = (_this._host||'').splitFirst( ':' );
+			var req = {
+				method: _this._method,
+				hostname: hostport.left,
+				port: parseInt( hostport.right ) || 80,
+				auth: _this._auth,
+				path: _this._path + ( _this._query ? '?' + _this._query : '' ),
+				headers: _this._headers,
+				rejectUnauthorized: false
+			};
+
+			var Scheme = Http;
+			if ( _this.scheme === 'https' ) {
+				Scheme = Https;
+				if ( _this._security instanceof Object ) {
+					req.merge( _this._security );
+				}
 			}
-		};
 
+			req = Scheme.request( req, function ( res ) {
 
-		var hostport = (this._host||'').splitFirst( ':' );
+				response.setStatusCode( res.statusCode );
+				response.setHeaders( res.headers );
 
-		var req = Http.request( {
-			method: this._method,
-			hostname: hostport.left,
-			port: parseInt( hostport.right ) || 80,
-			auth: this._auth,
-			path: this._path + ( this._query ? '?' + this._query : '' ),
-			headers: this._headers
-		}, function ( res ) {
+				res.on( 'error', function ( err ) {
+					response.setError( err );
+					notify();
+					req.abort();
+				} );
 
-			response.setStatusCode( res.statusCode );
-			response.setHeaders( res.headers );
+				var chunks = [];
+				res.on( 'data', function( chunk ) {
+					chunks.push( chunk );
+				} );
 
-			res.on( 'error', function ( err ) {
+				res.on( 'end', function () {
+					response.setContent( Buffer.concat( chunks ) );
+					notify();
+				} );
+			
+			} );
+
+			// what if we receive the response callback before the error handler is registered, dumb node
+			// lets hope the request is not started before the next tick
+			req.on( 'error', function ( err ) {
 				response.setError( err );
 				notify();
 				req.abort();
 			} );
 
-			var chunks = [];
-			res.on( 'data', function( chunk ) {
-				chunks.push( chunk );
-			} );
+			if ( _this._content instanceof Buffer && _this._content.length > 0 ) {
+				req.end( _this._content );
+			}
+			else {
+				req.end();
+			}
+		};
 
-			res.on( 'end', function () {
-				response.setContent( Buffer.concat( chunks ) );
-				notify();
-			} );
-		
-		} );
-
-		//what if we receive the response callback before the error handler is registered, dumb node
-		//lets hope the request is not started before the next tick
-		req.on( 'error', function ( err ) {
-			response.setError( err );
-			notify();
-			req.abort();
-		} );
-
-		if ( ( this._content instanceof Buffer || String.isString( this._content ) ) &&
-		     this._content.length > 0 ) {
-			req.end( this._content );
+		var cencoding = this.getHeader( HttpHeaders.CONTENT_ENCODING );
+		if ( this._autoEncode && 
+		     ( cencoding === HttpHeaders.CONTENT_ENCODING_SNAPPY || 
+		       cencoding === HttpHeaders.CONTENT_ENCODING_GZIP ||
+		       cencoding === HttpHeaders.CONTENT_ENCODING_DEFLATE ) ) {
+			
+			if ( cencoding === HttpHeaders.CONTENT_ENCODING_SNAPPY ) {
+				Snappy.compress( content, _doSend );
+			}
+			else {
+				Zlib[ cencoding ]( content, _doSend );
+			}
 		}
 		else {
-			req.end();
+			_doSend( null, content );
 		}
 
 		return this;

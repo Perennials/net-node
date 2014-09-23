@@ -20,6 +20,7 @@ HttpHeaders.defineStatic( {
 	CONTENT_ENCODING_IDENTITY: 'identity',
 	CONTENT_ENCODING_GZIP: 'gzip',
 	CONTENT_ENCODING_DEFLATE: 'deflate',
+	CONTENT_ENCODING_SNAPPY: 'snappy',
 	TRANSFER_ENCODING: 'Transfer-Encoding',
 	TRANSFER_ENCODING_CHUNKED: 'chunked',
 	TRANSFER_ENCODING_IDENTITY: 'identity',
