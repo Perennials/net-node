@@ -185,6 +185,7 @@ HttpRequest.define( {
 			req.end();
 		}
 
+		return this;
 	}
 
 	//todo: toString() or direct write to a stream for logging
