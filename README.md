@@ -181,7 +181,7 @@ QueryString
 -----------
 
 ```js
-static .encode( query:Object ) : String|null;
+QueryString.encode( query:Object ) : String|null;
 ```
 Encodes an object as query string, excluding the question mark. Sub-objects
 and arrays are encoded in PHP `http_build_query()` style.
