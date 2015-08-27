@@ -118,7 +118,6 @@ HttpResponse.define( {
 		return this._statusCode;
 	}
 
-	//todo: toString() or direct write to a stream for logging
 } );
 
 module.exports = HttpResponse;

@@ -21,7 +21,7 @@ npm install https://github.com/Perennials/net-node/tarball/master
 		- [.setHeader() / .getHeader()](#setheader--getheader)
 		- [.getHeaders() / .getHeader()](#getheaders--getheader)
 		- [.setContent() / .getContent()](#setcontent--getcontent)
-		- [.setSecurity() / .getSecurity()](#setsecurity--getsecurity)
+		- [.setOptions() / .getOptions()](#setoptions--getoptions)
 		- [.isInProgress()](#isinprogress)
 		- [.dontAutoEncode()](#dontautoencode)
 		- [.send()](#send)
@@ -74,7 +74,7 @@ request.send( '<xml>content</xml>', function ( response ) ) {
 - [.setHeader() / .getHeader()](#setheader--getheader)
 - [.getHeaders() / .getHeader()](#getheaders--getheader)
 - [.setContent() / .getContent()](#setcontent--getcontent)
-- [.setSecurity() / .getSecurity()](#setsecurity--getsecurity)
+- [.setOptions() / .getOptions()](#setoptions--getoptions)
 - [.isInProgress()](#isinprogress)
 - [.dontAutoEncode()](#dontautoencode)
 - [.send()](#send)
@@ -190,16 +190,17 @@ Sets the HTTP message body. `encoding` is used when converting strings to `Buffe
 ```
 
 
-#### .setSecurity() / .getSecurity()
-This sets HTTPS specific options to be passed to https.Request. Right now the format
-is the same as the one accepted by node.js.
+#### .setOptions() / .getOptions()
+Sets additional options to be passed to node's `http.request()` or
+`https.request()`. Right now the format is the same as the one accepted by
+node.js.
 
 ```js
-.setSecurity(
-	security:Object
+.setOptions(
+	options:Object
 ) : this;
 
-.getSecurity();
+.getOptions();
 ```
 
 

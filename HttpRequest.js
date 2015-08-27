@@ -20,7 +20,7 @@ var _DefAcceptEncoding = (Snappy ? HttpHeaders.CONTENT_ENCODING_SNAPPY + ', ' : 
 
 function HttpRequest ( url ) {
 
-	this._inprogress = null;
+	this._inProgress = null;
 	this._autoEncode = true;
 	this._method = 'GET';
 	this._scheme = 'http';
@@ -30,6 +30,7 @@ function HttpRequest ( url ) {
 	this._auth = null;
 	this._content = null;
 	this._headers = {};
+	this._options = null;
 	this.setHeader( HttpHeaders.CONNECTION, HttpHeaders.CONNECTION_CLOSE );
 	this.setHeader( HttpHeaders.ACCEPT_ENCODING, _DefAcceptEncoding );
 
@@ -61,13 +62,13 @@ HttpRequest.define( {
 		return this;
 	},
 
-	setSecurity: function ( security ) {
-		this._security = security;
+	setOptions: function ( options ) {
+		this._options = options;
 		return this;
 	},
 
-	getSecurity: function () {
-		return this._security;
+	getOptions: function () {
+		return this._options;
 	},
 
 	setScheme: function ( scheme ) {
@@ -125,7 +126,7 @@ HttpRequest.define( {
 	},
 
 	isInProgress: function () {
-		return this._inprogress;
+		return this._inProgress;
 	},
 
 	setHeader: function ( name, value ) {
@@ -155,11 +156,11 @@ HttpRequest.define( {
 	//todo: support for output sink would be very nice, but only when needed (i.e. never)
 	send: function ( content, encoding ) {
 
-		if ( this._inprogress !== null ) {
+		if ( this._inProgress !== null ) {
 			throw new Error( 'Reusing the same HttpRequest is not implemented.' );
 		}
 
-		this._inprogress = true;
+		this._inProgress = true;
 
 
 		if ( !(content instanceof Buffer) && !String.isString( content ) ) {
@@ -189,11 +190,11 @@ HttpRequest.define( {
 			response.setRequest( _this );
 			
 			var notify = function () {
-				if ( _this._inprogress !== true ) {
+				if ( _this._inProgress !== true ) {
 					return;
 				}
 
-				_this._inprogress = false;
+				_this._inProgress = false;
 				if ( callback instanceof Function ) {
 					callback( response );
 				}
@@ -219,9 +220,10 @@ HttpRequest.define( {
 			var Scheme = Http;
 			if ( _this.scheme === 'https' ) {
 				Scheme = Https;
-				if ( _this._security instanceof Object ) {
-					req.merge( _this._security );
-				}
+			}
+
+			if ( _this._options instanceof Object ) {
+				req.merge( _this._options );
 			}
 
 			req = Scheme.request( req, function ( res ) {
@@ -242,6 +244,7 @@ HttpRequest.define( {
 
 				res.on( 'end', function () {
 					response.setContent( Buffer.concat( chunks ) );
+					chunks = null;
 					notify();
 				} );
 			
@@ -283,7 +286,6 @@ HttpRequest.define( {
 		return this;
 	}
 
-	//todo: toString() or direct write to a stream for logging
-} )
+} );
 
 module.exports = HttpRequest;

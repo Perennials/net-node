@@ -1,7 +1,7 @@
 {
 	"name": "Net",
 	"description": "Net classes for Node.js",
-	"version": "1.0.4",
+	"version": "1.1.0",
 	"author": "Borislav Peev <borislav.asdf@gmail.com>",
 	"engine": [
 		"node >= 0.10"
@@ -14,7 +14,7 @@
 		"Prototype": "https://github.com/perennials/prototype-js/tarball/master"
 	},
 	"optionalDependencies": {
-		"snappy": "3.0.3"
+		"snappy": "*"
 	},
 	"repository": {
 		"type": "git",
