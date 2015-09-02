@@ -236,16 +236,16 @@ the default value of node's option `rejectUnauthorized` will be changed to `fals
 .send(
 	content:String|Buffer,
 	encoding:String,
-	callback:function( response:HttpResponse )
+	callback:function( response:HttpResponse )|undefined
 ) : this;
 
 .send(
 	content:String|Buffer,
-	callback:function( response:HttpResponse ) 
+	callback:function( response:HttpResponse )|undefined 
 ) : this;
 
 .send(
-	callback:function( response:HttpResponse )
+	callback:function( response:HttpResponse )|undefined
 ) : this;
 ```
 
