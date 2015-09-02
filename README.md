@@ -54,7 +54,7 @@ var HttpHeaders = require( 'Net/HttpHeaders' );
 var request = new HttpRequest( 'http://server.com/page?q=search' );
 request.setMethod( 'POST' );
 request.setHeader( HttpHeaders.CONTENT_TYPE, HttpHeaders.CONTENT_TYPE_XML );
-request.send( '<xml>content</xml>', function ( response ) ) {
+request.send( '<xml>content</xml>', function ( response ) {
 
 	if ( response.isError() ) {
 		throw new Error( 'Damn!' );
