@@ -2,7 +2,7 @@ Net
 ===
 Net classes for Node.js. This module saves the tedious work of all the event
 handling in node.js to send a simple HTTP request and also helps with taking
-care of compressed content.
+care of the compressed content of the response.
 
 ```sh
 npm install https://github.com/Perennials/net-node/tarball/master
@@ -44,6 +44,11 @@ npm install https://github.com/Perennials/net-node/tarball/master
 
 HttpRequest
 -----------
+Represents a HTTP client request.
+
+```js
+var HttpRequest = require( 'Net/HttpRequest' );
+```
 
 ### Example usage
 
