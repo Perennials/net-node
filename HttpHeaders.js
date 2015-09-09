@@ -1,10 +1,14 @@
 "use strict";
 
-function HttpHeaders () {
-	throw new Error( 'Can not be instantiated (yet).' );
+
+class HttpHeaders {
+	constructor () {
+
+		throw new Error( 'Can not be instantiated (yet).' );
+	}
 }
 
-HttpHeaders.defineStatic( {
+HttpHeaders.static( {
 
 	CONTENT_TYPE: 'Content-Type',
 	CONTENT_TYPE_FORM: 'application/x-www-form-urlencoded',

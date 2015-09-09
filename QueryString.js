@@ -2,8 +2,22 @@
 
 var querystring = require( 'querystring' );
 
-function QueryString () {
-	throw new Error( 'Abstract class can not be instantiated.' )
+class QueryString {
+	constructor () {
+		throw new Error( 'Abstract class can not be instantiated.' )
+	}
+
+	/**
+	 * @def static function QueryString.encode ( object )
+	 * @param object
+	 * @return string|null
+	 */
+	static encode ( object ) {
+		if ( !(object instanceof Object) ) {
+			return null;
+		}
+		return _encodeObject( object );
+	}
 }
 
 //private
@@ -59,19 +73,5 @@ function _encodeObject ( object, namePrefix ) {
 	return ret;
 }
 
-QueryString.defineStatic( {
-	/**
-	 * @def static function QueryString.encode ( object )
-	 * @param object
-	 * @return string|null
-	 */
-	encode: function ( object ) {
-		if ( !(object instanceof Object) ) {
-			return null;
-		}
-		return _encodeObject( object );
-		
-	}
-} );
 
 module.exports = QueryString;

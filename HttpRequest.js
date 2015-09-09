@@ -18,88 +18,88 @@ var _DefAcceptEncoding = (Snappy ? HttpHeaders.CONTENT_ENCODING_SNAPPY + ', ' : 
                          HttpHeaders.CONTENT_ENCODING_DEFLATE + ', ' +
                          HttpHeaders.CONTENT_ENCODING_IDENTITY;
 
-function HttpRequest ( url ) {
+class HttpRequest {
 
-	this._inProgress = null;
-	this._autoEncode = true;
-	this._method = 'GET';
-	this._scheme = 'http';
-	this._host = null;
-	this._path = null;
-	this._query = null;
-	this._auth = null;
-	this._content = null;
-	this._headers = {};
-	this._options = null;
-	this.setHeader( HttpHeaders.CONNECTION, HttpHeaders.CONNECTION_CLOSE );
-	this.setHeader( HttpHeaders.ACCEPT_ENCODING, _DefAcceptEncoding );
+	constructor ( url ) {
 
-	if ( String.isString( url ) && url.length > 0 ) {
-		var url = Url.parse( url );
-		if ( url.protocol ) {
-			this._scheme = url.protocol.splitFirst( ':' ).left;
-		}
-		if ( url.path ) {
-			this._path = url.pathname;
-		}
-		if ( url.hostname ) {
-			this._host = url.hostname + ( url.port ? ':' + url.port : '' );
-		}
-		if ( url.auth ) {
-			this._auth = url.auth;
-		}
-		if ( url.search ) {
-			this._query = url.search.substr( 1 );
-		}
+		this._inProgress = null;
+		this._autoEncode = true;
+		this._method = 'GET';
+		this._scheme = 'http';
+		this._host = null;
+		this._path = null;
+		this._query = null;
+		this._auth = null;
+		this._content = null;
+		this._headers = {};
+		this._options = null;
+		this.setHeader( HttpHeaders.CONNECTION, HttpHeaders.CONNECTION_CLOSE );
+		this.setHeader( HttpHeaders.ACCEPT_ENCODING, _DefAcceptEncoding );
 
+		if ( String.isString( url ) && url.length > 0 ) {
+			var url = Url.parse( url );
+			if ( url.protocol ) {
+				this._scheme = url.protocol.splitFirst( ':' ).left;
+			}
+			if ( url.path ) {
+				this._path = url.pathname;
+			}
+			if ( url.hostname ) {
+				this._host = url.hostname + ( url.port ? ':' + url.port : '' );
+			}
+			if ( url.auth ) {
+				this._auth = url.auth;
+			}
+			if ( url.search ) {
+				this._query = url.search.substr( 1 );
+			}
+
+		}
 	}
-}
 
-HttpRequest.define( {
-
-	dontAutoEncode: function () {
+	dontAutoEncode () {
 		this._autoEncode = false;
 		return this;
-	},
+	}
 
-	setOptions: function ( options ) {
+	setOptions ( options ) {
 		this._options = options;
 		return this;
-	},
+	}
 
-	getOptions: function () {
+	getOptions () {
 		return this._options;
-	},
+	}
 
-	setScheme: function ( scheme ) {
+	setScheme ( scheme ) {
 		this._scheme = scheme;
 		return this;
-	},
+	}
 
-	getScheme: function ( scheme ) {
+	getScheme ( scheme ) {
 		return this._scheme;
-	},
+	}
 
-	setHost: function ( host ) {
+	setHost ( host ) {
 		this._host = host;
 		return this;
-	},
+	}
 
-	getHost: function () {
+	getHost () {
 		return this._host;
-	},
+	}
 
-	setMethod: function ( method ) {
+	setMethod ( method ) {
 		this._method = method;
 		return this;
-	},
+	}
 
-	getMethod: function () {
+	getMethod () {
 		return this._method;
-	},
+	}
 
 	//todo: support for streams will be very nice, but only when needed (i.e. never)
-	setContent: function ( content, encoding ) {
+	setContent ( content, encoding ) {
 		if ( String.isString( content ) && content.length > 0 ) {
 			content = new Buffer( content, encoding || 'utf8' );
 		}
@@ -110,26 +110,26 @@ HttpRequest.define( {
 			this.setHeader( HttpHeaders.CONTENT_LENGTH, this._content.length );
 		}
 		return this;
-	},
+	}
 
-	getContent: function () {
+	getContent () {
 		return this._content;
-	},
+	}
 
-	setQuery: function ( query ) {
+	setQuery ( query ) {
 		this._query = query instanceof Object ? QueryString.encode( query ) : query;
 		return this;
-	},
+	}
 
-	getQuery: function () {
+	getQuery () {
 		return this._query;
-	},
+	}
 
-	isInProgress: function () {
+	isInProgress () {
 		return this._inProgress;
-	},
+	}
 
-	setHeader: function ( name, value ) {
+	setHeader ( name, value ) {
 		if ( name instanceof Object ) {
 			for ( var key in name ) {
 				this._headers[ key.toLowerCase() ] = name[ key ];
@@ -139,22 +139,22 @@ HttpRequest.define( {
 			this._headers[ name.toLowerCase() ] = value;
 		}
 		return this;
-	},
+	}
 
-	getHeaders: function () {
+	getHeaders () {
 		return this._headers;
-	},
+	}
 
-	getHeader: function ( name ) {
+	getHeader ( name ) {
 		var ret = this._headers instanceof Object ?
 		          this._headers[ name.toLowerCase() ] :
 		          undefined;
 
 		return ret;
-	},
+	}
 
 	//todo: support for output sink would be very nice, but only when needed (i.e. never)
-	send: function ( content, encoding ) {
+	send ( content, encoding ) {
 
 		if ( this._inProgress !== null ) {
 			throw new Error( 'Reusing the same HttpRequest is not implemented.' );
@@ -285,7 +285,6 @@ HttpRequest.define( {
 
 		return this;
 	}
-
-} );
+}
 
 module.exports = HttpRequest;

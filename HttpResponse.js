@@ -8,44 +8,45 @@ catch ( e ) {}
 var Zlib = require( 'zlib' );
 
 
-function HttpResponse () {
-	this._request = null;
-	this._error = null;
-	this._content = null;
-	this._headers = null;
-	this._statusCode = null;
-}
+class HttpResponse {
 
-HttpResponse.define( {
-	setRequest: function ( request ) {
+	constructor () {
+		this._request = null;
+		this._error = null;
+		this._content = null;
+		this._headers = null;
+		this._statusCode = null;
+	}
+	
+	setRequest ( request ) {
 		return this._request = request;
-	},
+	}
 
-	getRequest: function () {
+	getRequest () {
 		return this._request;
-	},
+	}
 
-	setError: function ( error ) {
+	setError ( error ) {
 		return this._error = error;
-	},
+	}
 
-	getError: function () {
+	getError () {
 		return this._error;
-	},
+	}
 
-	isError: function () {
+	isError () {
 		return this._error !== null || this._statusCode >= 400;
-	},
+	}
 
-	setContent: function ( content ) {
+	setContent ( content ) {
 		return this._content = content;
-	},
+	}
 
-	getContent: function () {
+	getContent () {
 		return this._content;
-	},
+	}
 
-	isCompressed: function () {
+	isCompressed () {
 		var encoding = this.getHeader( HttpHeaders.CONTENT_ENCODING );
 		
 		if ( encoding === HttpHeaders.CONTENT_ENCODING_IDENTITY ) {
@@ -65,9 +66,9 @@ HttpResponse.define( {
 		}
 
 		return false;
-	},
+	}
 
-	getDecompressed: function ( callback ) {
+	getDecompressed ( callback ) {
 
 		if ( !this.isCompressed() ) {
 			callback( null, this._content );
@@ -92,32 +93,32 @@ HttpResponse.define( {
 		}
 
 		throw new Error( 'Should never get here.' );
-	},
+	}
 
-	setHeaders: function ( headers ) {
+	setHeaders ( headers ) {
 		return this._headers = headers;
-	},
+	}
 
-	getHeaders: function () {
+	getHeaders () {
 		return this._headers;
-	},
+	}
 
-	getHeader: function ( name ) {
+	getHeader ( name ) {
 		var ret = this._headers instanceof Object ?
 		          this._headers[ name.toLowerCase() ] :
 		          undefined;
 
 		return ret;
-	},
-
-	setStatusCode: function ( statusCode ) {
-		return this._statusCode = statusCode;
-	},
-
-	getStatusCode: function () {
-		return this._statusCode;
 	}
 
-} );
+	setStatusCode ( statusCode ) {
+		return this._statusCode = statusCode;
+	}
+
+	getStatusCode () {
+		return this._statusCode;
+	}	
+
+}
 
 module.exports = HttpResponse;
