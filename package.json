@@ -1,7 +1,7 @@
 {
 	"name": "Net",
 	"description": "Net classes for Node.js",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"author": "Borislav Peev <borislav.asdf@gmail.com>",
 	"engine": [
 		"node >= 4.0.0"
@@ -11,9 +11,7 @@
 	},
 	"devDependencies": {
 		"Unitest": "https://github.com/perennials/unitest-js/tarball/1.7.0",
-		"Prototype": "https://github.com/perennials/prototype-js/tarball/1.4.0"
-	},
-	"optionalDependencies": {
+		"Prototype": "https://github.com/perennials/prototype-js/tarball/1.4.0",
 		"snappy": "*"
 	},
 	"repository": {
