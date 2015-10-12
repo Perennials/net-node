@@ -163,10 +163,6 @@ class HttpRequest {
 		this._inProgress = true;
 
 
-		if ( !(content instanceof Buffer) && !String.isString( content ) ) {
-			content = undefined;
-		}
-
 		if ( !String.isString( encoding ) ) {
 			encoding = undefined;
 		}
@@ -265,6 +261,18 @@ class HttpRequest {
 				req.end();
 			}
 		};
+
+		var ctype = this.getHeader( HttpHeaders.CONTENT_TYPE );
+		if ( this._autoEncode &&
+		     ctype === HttpHeaders.CONTENT_TYPE_JSON &&
+		     content instanceof Object
+		) {
+			content = JSON.stringify( content );
+		}
+
+		if ( !(content instanceof Buffer) && !String.isString( content ) ) {
+			content = undefined;
+		}
 
 		var cencoding = this.getHeader( HttpHeaders.CONTENT_ENCODING );
 		if ( this._autoEncode && 

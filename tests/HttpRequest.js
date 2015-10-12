@@ -90,3 +90,21 @@ UnitestA( 'HttpRequest bad compression', function ( test ) {
 	} );
 	
 } );
+
+
+UnitestA( 'HttpRequest auto json encode', function ( test ) {
+	DummyServer.serveOnce( {
+	}, function ( hostUrl ) {
+
+
+		(new HttpRequest( hostUrl + '/asd/qwe?zxc=123' ))
+		.setHeader( 'Content-Type', 'application/json' )
+		.send( { asd: 'qwe' }, function ( response ) {
+			test.eq( response.getContent().toString(), '{"asd":"qwe"}' );
+			test.out();
+
+		} );
+
+	} );
+	
+} );

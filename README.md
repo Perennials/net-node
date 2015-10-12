@@ -227,20 +227,25 @@ Prevents `.send()` from automatically compressing the content based on the heade
 
 #### .send()
 Performs the HttpRequest. `encoding` is used when converting strings to
-`Buffer`, defaults to `"utf8"`. If the headers contain `Content-Encoding` with
-one of the supported encodings (snappy, gzip, deflate), the content will be
-automatically encoded (overridable with `.dontAutoEncode()`). For HTTPS requests,
-the default value of node's option `rejectUnauthorized` will be changed to `false`.
+`Buffer`, defaults to `"utf8"`.
+
+If the `content` is `Object` and the headers has `Content-Type: application/json`,
+the content will be strinigfied as JSON.
+
+If the headers contain `Content-Encoding` with one of the supported encodings
+(snappy, gzip, deflate), the content will be automatically encoded
+(overridable with `.dontAutoEncode()`). For HTTPS requests, the default value
+of node's option `rejectUnauthorized` will be changed to `false`.
 
 ```js
 .send(
-	content:String|Buffer,
+	content:String|Buffer|Object,
 	encoding:String,
 	callback:function( response:HttpResponse )|undefined
 ) : this;
 
 .send(
-	content:String|Buffer,
+	content:String|Buffer|Object,
 	callback:function( response:HttpResponse )|undefined 
 ) : this;
 
