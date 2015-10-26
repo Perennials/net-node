@@ -12,7 +12,8 @@
 	"devDependencies": {
 		"Unitest": "https://github.com/perennials/unitest-js/tarball/master",
 		"Prototype": "https://github.com/perennials/prototype-js/tarball/master",
-		"snappy": "*"
+		"snappy": "4.0.x",
+		"snappy-stream": "2.0.x"
 	},
 	"repository": {
 		"type": "git",

@@ -16,6 +16,15 @@ class HttpResponse {
 		this._content = null;
 		this._headers = null;
 		this._statusCode = null;
+		this._handle = null;
+	}
+
+	setHandle ( handle ) {
+		return this._handle = handle;
+	}
+
+	getHandle () {
+		return this._handle;
 	}
 	
 	setRequest ( request ) {

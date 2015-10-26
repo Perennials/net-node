@@ -5,8 +5,9 @@ require( 'Prototype' );
 var Http = require( 'http' );
 var Https = require( 'https' );
 var Url = require( 'url' );
-var HttpResponse = require( './HttpResponse.js' );
-var HttpHeaders = require( './HttpHeaders.js' );
+var HttpResponse = require( './HttpResponse' );
+var HttpHeaders = require( './HttpHeaders' );
+var IncomingMessageReader = require( './IncomingMessageReader' );
 
 var Snappy = null;
 try { Snappy = require( 'snappy' ); }
@@ -33,6 +34,7 @@ class HttpRequest {
 		this._content = null;
 		this._headers = {};
 		this._options = null;
+		this._handle = null;
 		this.setHeader( HttpHeaders.CONNECTION, HttpHeaders.CONNECTION_CLOSE );
 		this.setHeader( HttpHeaders.ACCEPT_ENCODING, _DefAcceptEncoding );
 
@@ -55,6 +57,10 @@ class HttpRequest {
 			}
 
 		}
+	}
+
+	getHandle () {
+		return null;
 	}
 
 	dontAutoEncode () {
@@ -153,8 +159,7 @@ class HttpRequest {
 		return ret;
 	}
 
-	//todo: support for output sink would be very nice, but only when needed (i.e. never)
-	send ( content, encoding ) {
+	send ( content, encoding, callback ) {
 
 		if ( this._inProgress !== null ) {
 			throw new Error( 'Reusing the same HttpRequest is not implemented.' );
@@ -162,14 +167,15 @@ class HttpRequest {
 
 		this._inProgress = true;
 
-
-		if ( !String.isString( encoding ) ) {
+		if ( content instanceof Function || content instanceof IncomingMessageReader ) {
+			callback = content;
 			encoding = undefined;
+			content = undefined;
 		}
 
-		var callback = arguments[ arguments.length - 1 ];
-		if ( !(callback instanceof Function) ) {
-			callback = null;
+		if ( encoding instanceof Function || encoding instanceof IncomingMessageReader ) {
+			callback = encoding;
+			encoding = undefined;
 		}
 
 		var _this = this;
@@ -179,11 +185,14 @@ class HttpRequest {
 				_this.setContent( content, encoding );
 			}
 
-			var response = new HttpResponse();
-			if ( err ) {
-				response.setError( err );
+			var response;
+			if ( callback instanceof Function ) {
+				response = new HttpResponse();
+				if ( err ) {
+					response.setError( err );
+				}
+				response.setRequest( _this );
 			}
-			response.setRequest( _this );
 			
 			var notify = function () {
 				if ( _this._inProgress !== true ) {
@@ -224,32 +233,48 @@ class HttpRequest {
 
 			req = Scheme.request( req, function ( res ) {
 
-				response.setStatusCode( res.statusCode );
-				response.setHeaders( res.headers );
+				if ( response ) {
+					response.setHandle( res );
+					response.setStatusCode( res.statusCode );
+					response.setHeaders( res.headers );
+				}
 
-				res.on( 'error', function ( err ) {
-					response.setError( err );
-					notify();
-					req.abort();
-				} );
+				if ( callback instanceof IncomingMessageReader ) {
+					callback.read( res );
+					res.on( 'error', notify );
+					res.on( 'end', notify );
+				}
+				else {
 
-				var chunks = [];
-				res.on( 'data', function( chunk ) {
-					chunks.push( chunk );
-				} );
+					res.on( 'error', function ( err ) {
+						response.setError( err );
+						notify();
+						req.abort();
+					} );
 
-				res.on( 'end', function () {
-					response.setContent( Buffer.concat( chunks ) );
-					chunks = null;
-					notify();
-				} );
+					var chunks = [];
+					res.on( 'data', function( chunk ) {
+						chunks.push( chunk );
+					} );
+
+					res.on( 'end', function () {
+						response.setContent( Buffer.concat( chunks ) );
+						chunks = null;
+						notify();
+					} );
+				}
 			
 			} );
 
-			// what if we receive the response callback before the error handler is registered, dumb node
-			// lets hope the request is not started before the next tick
+			_this._handle = req;
+
 			req.on( 'error', function ( err ) {
-				response.setError( err );
+				if ( response ) {
+					response.setError( err );
+				}
+				else if ( callback instanceof IncomingMessageReader ) {
+					callback.onError( err );
+				}
 				notify();
 				req.abort();
 			} );

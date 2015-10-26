@@ -1,5 +1,9 @@
+"use strict";
+
 var DummyServer = require( './DummyServer.js' );
 var HttpRequest = require( '../HttpRequest.js' );
+var UncompressingReader = require( '../UncompressingReader' );
+var UncompressingStreamReader = require( '../UncompressingStreamReader' );
 
 // Unitest.only( true, 'HttpRequest' );
 
@@ -25,7 +29,6 @@ UnitestA( 'HttpRequest', function ( test ) {
 	}, function ( hostUrl ) {
 
 
-		debugger;
 		(new HttpRequest( hostUrl + '/asd/qwe?zxc=123' ))
 		.send( 'hello world', function ( response ) {
 			
@@ -35,6 +38,52 @@ UnitestA( 'HttpRequest', function ( test ) {
 			test( response.getStatusCode() == 200 );
 
 			test.out();
+		} );
+
+	} );
+	
+} );
+
+
+UnitestA( 'HttpRequest UncompressingReader', function ( test ) {
+	DummyServer.serveOnce( {
+		headers: { 'Content-Encoding': 'gzip' }
+		// content: 'hello world'
+	}, function ( hostUrl ) {
+
+		(new HttpRequest( hostUrl + '/asd/qwe?zxc=123' ))
+		.setHeader( 'Content-Encoding', 'gzip' )
+		.send( 'hello world', new UncompressingReader( function ( err, response ) {
+			
+			test.eq( response.toString(), 'hello world' );
+
+			test.out();
+		} ) );
+
+	} );
+	
+} );
+
+UnitestA( 'HttpRequest UncompressingStreamReader', function ( test ) {
+	DummyServer.serveOnce( {
+		headers: { 'Content-Encoding': 'gzip' }
+		// content: 'hello world'
+	}, function ( hostUrl ) {
+
+		(new HttpRequest( hostUrl + '/asd/qwe?zxc=123' ))
+		.setHeader( 'Content-Encoding', 'gzip' )
+		.send( 'hello world', new class extends UncompressingStreamReader {
+			
+			onData ( data ) {
+
+				test.eq( data.toString(), 'hello world' );
+			}
+
+			onEnd () {
+
+				test.out();
+			}
+
 		} );
 
 	} );
