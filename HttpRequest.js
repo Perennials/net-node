@@ -60,7 +60,7 @@ class HttpRequest {
 	}
 
 	getHandle () {
-		return null;
+		return this._handle;
 	}
 
 	dontAutoEncode () {
