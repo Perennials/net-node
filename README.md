@@ -14,6 +14,7 @@ npm install https://github.com/Perennials/net-node/tarball/master
 	- [Example usage](#example-usage)
 	- [Methods](#methods)
 		- [Constructor](#constructor)
+		- [.getHandle()](#gethandle)
 		- [.setMethod() / .getMethod()](#setmethod--getmethod)
 		- [.setScheme() / .getScheme()](#setscheme--getscheme)
 		- [.setQuery() / .getQuery()](#setquery--getquery)
@@ -28,14 +29,28 @@ npm install https://github.com/Perennials/net-node/tarball/master
 - [HttpResponse](#httpresponse)
 	- [Methods](#methods-1)
 		- [.getRequest()](#getrequest)
+		- [.getHandle()](#gethandle-1)
 		- [.isError()](#iserror)
 		- [.getError()](#geterror)
 		- [.getContent()](#getcontent)
 		- [.getHeaders() / .getHeader()](#getheaders--getheader-1)
 		- [.isCompressed()](#iscompressed)
 		- [.getDecompressed()](#getdecompressed)
-- [QueryString](#querystring)
+- [IncomingMessageReader](#incomingmessagereader)
 	- [Methods](#methods-2)
+		- [Constructor](#constructor-1)
+		- [.read()](#read)
+		- [.onData()](#ondata)
+		- [.onError()](#onerror)
+		- [.onEnd()](#onend)
+- [UncompressingReader](#uncompressingreader)
+	- [Methods](#methods-3)
+		- [Constructor](#constructor-2)
+- [UncompressingStreamReader](#uncompressingstreamreader)
+	- [Methods](#methods-4)
+		- [Constructor](#constructor-3)
+- [QueryString](#querystring)
+	- [Methods](#methods-5)
 		- [QueryString.encode()](#querystringencode)
 - [Authors](#authors)
 
@@ -72,6 +87,7 @@ request.send( '<xml>content</xml>', function ( response ) {
 ### Methods
 
 - [Constructor](#constructor)
+- [.getHandle()](#gethandle)
 - [.setMethod() / .getMethod()](#setmethod--getmethod)
 - [.setScheme() / .getScheme()](#setscheme--getscheme)
 - [.setQuery() / .getQuery()](#setquery--getquery)
@@ -95,6 +111,13 @@ new HttpRequest(
 new HttpRequest();
 ```
 
+#### .getHandle()
+Retrieves the underlaying nodejs ClientRequest. This will be available only
+after `.send()`.
+
+```js
+.getHandle() : http.ClientRequest|null;
+```
 
 #### .setMethod() / .getMethod()
 Sets the HTTP method, e.g. `POST` or `GET`.
@@ -237,20 +260,24 @@ If the headers contain `Content-Encoding` with one of the supported encodings
 (overridable with `.dontAutoEncode()`). For HTTPS requests, the default value
 of node's option `rejectUnauthorized` will be changed to `false`.
 
+The callback is either a function that will receive the full response or a "sink".
+A sink (a class derived from `IncomingMessageReader`) will receive the raw node
+http.IncomingMessage and can process it incrementally.
+
 ```js
 .send(
 	content:String|Buffer|Object,
 	encoding:String,
-	callback:function( response:HttpResponse )|undefined
+	callback:function( response:HttpResponse )|IncomingMessageReader|undefined
 ) : this;
 
 .send(
 	content:String|Buffer|Object,
-	callback:function( response:HttpResponse )|undefined 
+	callback:function( response:HttpResponse )|IncomingMessageReader|undefined 
 ) : this;
 
 .send(
-	callback:function( response:HttpResponse )|undefined
+	callback:function( response:HttpResponse )|IncomingMessageReader|undefined
 ) : this;
 ```
 
@@ -264,6 +291,7 @@ be constructed manually.
 ### Methods
 
 - [.getRequest()](#getrequest)
+- [.getHandle()](#gethanle-1)
 - [.isError()](#iserror)
 - [.getError()](#geterror)
 - [.getContent()](#getcontent)
@@ -278,6 +306,12 @@ Retrieves the `HttpRequest` that produced this response.
 .getRequest() : HttpRequest|null;
 ```
 
+#### .getHandle()
+Retrieves the underlaying nodejs IncomingMessage.
+
+```js
+.getHandle() : http.IncomingMessage|null;
+```
 
 #### .isError()
 Checks if this is an error response. **Notice**: error response may be due to
@@ -334,8 +368,138 @@ Decompresses the content according to the `Content-Encoding` header (if it is co
 ```
 
 
+IncomingMessageReader
+---------------------
+An object of this class can act a sink for HTTP responses. This is only the base class.
+The base class will hook the `data`, `error` and `end` events of the HTTP response and
+will call `.onData()`, `.onError()` and `.onEnd()` accordingly.
+
+```js
+var IncomingMessageReader = require( 'Net/IncomingMessageReader' );
+```
+
+### Methods
+
+- [Constructor](#constructor-1)
+- [.read()](#read)
+- [.onData()](#ondata)
+- [.onError()](#onerror)
+- [.onEnd()](#onend)
+
+#### Constructor
+This function will invoke `.read()` if a `message` is given.
+
+```js
+new IncomingMessageReader(
+	message:http.IncomingMessage|undefined
+);
+```
+
+#### .read()
+This function will actually rig the event handlers on the HTTP response.
+It will be optionally ivoked by the constructor if a message parameter is given.
+
+The event listeners registered by this function will be stored in `._onData`,
+`._onError` and `._onEnd`, these properties should be treated as protected and
+can be modified by the derived classes.
+
+```js
+.read(
+	message:http.IncomingMessage
+);
+```
+
+#### .onData()
+Called on `data` event on the HTTP response. This function will also emit
+`data` event for the object itself. Derived classes can override this
+function, but should call the super function, so the event emitting
+functionality will remain in tact.
+
+```js
+.onData(
+	chunk:Buffer
+);
+```
+
+#### .onError()
+Called on `error` event on the HTTP response or on the HTTP request. This
+function will also emit `error` event for the object itself. Derived classes
+can override this function, but should call the super function, so the event
+emitting functionality will remain in tact.
+
+```js
+.onError(
+	error:Error
+);
+```
+
+#### .onEnd()
+Called on `end` event on the HTTP response. This function will also emit `end`
+event for the object itself. Derived classes can override this function, but
+should call the super function, so the event emitting functionality will
+remain in tact.
+
+```js
+.onEnd();
+```
+
+UncompressingReader
+-------------------
+
+Extends [`IncomingMessageReader`](#incomingmessagereader). This class will read
+the whole response in a buffer, optionally uncompress it and pass the result the
+provided callback.
+
+```js
+var UncompressingReader = require( 'Net/UncompressingReader' );
+```
+
+### Methods
+
+#### Constructor
+
+```js
+new UncompressingReader(
+	message:http.IncomingMessage,
+	callback:function( err:Error|null, content:Buffer|null )
+);
+```
+
+```js
+new UncompressingReader(
+	callback:function( err:Error|null, content:Buffer|null )
+);
+```
+
+UncompressingStreamReader
+-------------------------
+
+Extends [`IncomingMessageReader`](#incomingmessagereader). This class will read
+and uncompress the response incrementally. The `.onData()` handler will receive
+uncompressed chunks. One can either extend the class and override `.onData()` or
+handle the `data` event.
+
+```js
+var UncompressingStreamReader = require( 'Net/UncompressingStreamReader' );
+```
+
+### Methods
+
+#### Constructor
+
+```js
+new UncompressingStreamReader(
+	message:http.IncomingMessage|undefined
+);
+```
+
+
 QueryString
 -----------
+
+```js
+var QueryString = require( 'Net/QueryString' );
+```
 
 ### Methods
 
