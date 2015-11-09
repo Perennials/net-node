@@ -34,4 +34,19 @@ Unitest( 'AcceptEncoding.accept()', function ( test ) {
 	test( a.accepts( 'deflate' ) === true );
 	test.eq( a.getPreferred(), 'identity' );
 	test( a.isPreferred( 'identity' ) === true );
+
+	var a = new AcceptEncoding( 'gzip;q=1.0, compress; q=0.5, *;q=0' );
+	test( a.accepts( 'gzip' ) === true );
+	test( a.accepts( 'identity' ) === false );
+	test( a.accepts( 'compress' ) === true );
+
+	var a = new AcceptEncoding( 'gzip;q=1.0, compress; q=0.5, identity;q=0' );
+	test( a.accepts( 'gzip' ) === true );
+	test( a.accepts( 'identity' ) === false );
+	test( a.accepts( 'compress' ) === true );
+
+	var a = new AcceptEncoding( 'gzip;q=1.0, compress; q=0.5' );
+	test( a.accepts( 'gzip' ) === true );
+	test( a.accepts( 'identity' ) === true );
+	test( a.accepts( 'compress' ) === true );
 } );
