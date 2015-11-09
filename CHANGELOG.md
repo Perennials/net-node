@@ -1,3 +1,7 @@
+1.5
+---
+- Added `AcceptEncoding` utility class.
+
 1.4
 ---
 - Added ability to give "sinks" to `HttpRequest.send()`.

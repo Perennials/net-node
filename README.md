@@ -52,6 +52,12 @@ npm install https://github.com/Perennials/net-node/tarball/master
 - [QueryString](#querystring)
 	- [Methods](#methods-5)
 		- [QueryString.encode()](#querystringencode)
+- [AcceptEncoding](#acceptencoding)
+	- [Methods](#methods-6)
+		- [Constructor](#constructor-4)
+		- [.accepts()](#accepts)
+		- [.getPreferred()](#getpreferred)
+		- [.isPreferred()](#ispreferred)
 - [Authors](#authors)
 
 <!-- /MarkdownTOC -->
@@ -496,6 +502,7 @@ new UncompressingStreamReader(
 
 QueryString
 -----------
+Utility class for encoding URL strings.
 
 ```js
 var QueryString = require( 'Net/QueryString' );
@@ -515,6 +522,56 @@ QueryString.encode(
 ) : String|null;
 ```
 
+
+AcceptEncoding
+--------------
+Utility class for parsing `accept-encoding` header according to the HTTP/1.1 specs.
+
+```js
+var AcceptEncoding = require( 'Net/AcceptEncoding' );
+```
+
+### Methods
+
+- [Constructor](#constructor-4)
+- [.accepts()](#accepts)
+- [.getPreferred()](#getpreferred)
+- [.isPreferred()](#ispreferred)
+
+#### Constructor
+Accepts one parameter - the value of the `accept-ecoding` HTTP header.
+
+```js
+new AcceptEncoding(
+	accepts:String|undefined
+);
+```
+
+#### .accepts()
+Determines if some ecoding type should be accepted.
+
+```js
+.accepts(
+	type:String
+) : Boolean;
+```
+
+#### .getPreferred()
+Retrieves the most preferred encoding type. May return `*`.
+
+```js
+.getPreferred() : String;
+```
+
+#### .isPreferred()
+Check if the supplied type is preferred. This function is provided
+to avoid taking care of the `*` case manually.
+
+```js
+.isPreferred(
+	type:String
+) : Boolean;
+```
 
 Authors
 -------
