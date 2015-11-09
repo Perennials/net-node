@@ -85,9 +85,9 @@ class HttpResponse {
 		}
 
 		var encoding = this.getHeader( HttpHeaders.CONTENT_ENCODING );
-		if ( encoding === HttpHeaders.CONTENT_ENCODING_SNAPPY ) {
+		if ( Snappy && encoding === HttpHeaders.CONTENT_ENCODING_SNAPPY ) {
 			
-			Snappy.decompress( this._content, callback );
+			Snappy.uncompress( this._content, callback );
 			return this;
 		}
 		else if ( encoding === HttpHeaders.CONTENT_ENCODING_GZIP ) {
